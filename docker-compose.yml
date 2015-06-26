@@ -1,0 +1,23 @@
+mongodb:
+  image: mongo
+  ports:
+  - "27017"
+proxy:
+  image: jwilder/nginx-proxy
+  ports:
+  - "80:80"
+  - "443:443"
+  volumes:
+  - processing/ssl/docker/:/etc/nginx/certs
+  - /var/run/docker.sock:/tmp/docker.sock
+app:
+  image: node
+  ports:
+  - "80"
+  links:
+  - mongodb:mongodb
+  volumes:
+  - .:/data
+  command: node /data/app.js
+  environment:
+    VIRTUAL_HOST: images.jlee.biz
