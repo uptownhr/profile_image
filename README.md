@@ -11,3 +11,8 @@ Get a mongo database up or if you have docker working, use the command
 `/tw/:username` Will redirect you to the user's profile image
 
 `/:username` shows an example of the user's profile image
+
+# Demo
+Checkout the api @ [images.jlee.biz](http://images.jlee.biz) and pass in a username. 
+
+ie: [http://images.jlee.biz/jleebiz](http://images.jlee.biz/jleebiz)
