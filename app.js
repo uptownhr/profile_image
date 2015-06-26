@@ -29,37 +29,28 @@ app.get('/:username', function(req,res){
     res.send(html);
 });
 
-app.listen(80);
+app.listen(8080);
 
 function getTwitterProfile(name, cb){
 
     async.waterfall(
         [
             function(callback) {
-                console.log('db search');
                 Twitter.findOne({username: name}, function (err, data) {
                     callback(null, data);
                 });
             }, function(profile, callback){
             if(profile){
-                console.log('using cache');
                 callback(null, profile.raw);
             }else{
-                console.log('hitting twitter api');
                 var twit = i.twit();
-
-                search = {
-                    q: name
-                };
-
-                twit.get('/users/search', {q: name}, function(err,data,res){
-                    data = data[0];
+                twit.get('/users/show', {screen_name: name}, function(err,data,res){
 
                     var newTwitter = new Twitter();
                     newTwitter.username = data.screen_name;
                     newTwitter.raw = data;
                     newTwitter.save(function(){
-                        console.log('new user saved', this.screen_name);
+                        console.log('new user saved', data.screen_name);
                     });
                     callback(null, data);
                 });

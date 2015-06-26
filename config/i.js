@@ -11,8 +11,6 @@ module.exports = {
             access_token_secret: secrets.twitter.accessTokenSecret
         };
 
-        console.log(twitter_config);
-
         var twit = new Twit( twitter_config );
 
         return twit;
