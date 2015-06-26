@@ -15,4 +15,5 @@ Get a mongo database up or if you have docker working, use the command
 # Demo
 Checkout the api @ [images.jlee.biz](http://images.jlee.biz) and pass in a username. 
 
-ie: [http://images.jlee.biz/jleebiz](http://images.jlee.biz/jleebiz)
+Redirect: [http://images.jlee.biz/tw/jleebiz](http://images.jlee.biz/tw/jleebiz)
+Sample: [http://images.jlee.biz/jleebiz](http://images.jlee.biz/jleebiz)
