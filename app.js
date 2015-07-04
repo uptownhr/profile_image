@@ -23,26 +23,29 @@ app.get('/tw/:username', function(req,res){
     });
 });
 
-app.get('/:username', function(req,res){
-    var name = req.params.username;
-    var html = '<img src="/tw/' + name + '" />';
-    res.send(html);
+
+
+//populate followers for anyone that doesn't have followers populated
+//per rate limit of 15
+app.get('/followers/populate', function(req,res){
+    var rate_limit = 15;
+    Twitter.find({follower_ids: {$size: 0}}).limit(rate_limit).exec(function(err, profiles) {
+        async.eachSeries(profiles, function(profile,callback){
+            console.log('populating followers for ', profile.username);
+            getTwitterProfileFollowers(profile.username, function(err, follower_ids){
+                if(err){ console.log('error populating followers for ', profile.username); }
+                callback(err);
+            });
+        }, function(err){
+            if(err){ return res.send(err); }
+
+            res.send('done');
+        });
+    });
 });
 
-app.get('/followers/:username', function(req,res){
-    var username = req.params.username;
 
-    getTwitterProfileFollowers(username, function(err, profile){
-        if(err){
-            res.send(err);
-        }else{
-            res.send(profile);
-        }
-    })
-});
-
-
-//loop through users follow and populate profile data
+//loop through users followers and populate profile data
 app.get('/followers/:username/populate', function(req,res){
     var username = req.params.username;
 
@@ -88,9 +91,11 @@ app.get('/followers/:username/populate', function(req,res){
                             return callback('exit early');
                         }
                         twit.get('/users/lookup', {user_id: ids.join(',')}, function(err, data){
-                            if(!err){
-                                success_count++;
+                            if(err){
+                                return callback(err);
                             }
+
+                            success_count++;
 
                             async.eachSeries(data, function(user, callback){
                                 var newTwitter = new Twitter();
@@ -119,6 +124,26 @@ app.get('/followers/:username/populate', function(req,res){
 
 });
 
+
+
+app.get('/followers/:username', function(req,res){
+    var username = req.params.username;
+
+    getTwitterProfileFollowers(username, function(err, profile){
+        if(err){
+            res.send(err);
+        }else{
+            res.send(profile);
+        }
+    })
+});
+
+app.get('/:username', function(req,res){
+    var name = req.params.username;
+    var html = '<img src="/tw/' + name + '" />';
+    res.send(html);
+});
+
 app.listen(8080);
 
 function getTwitterProfileFollowers(username, cb){
@@ -138,6 +163,10 @@ function getTwitterProfileFollowers(username, cb){
                     var twit = i.twit();
                     console.log(profile.username);
                     twit.get('/followers/ids', {screen_name: profile.username, count: 5000}, function(err, data){
+                        if(err){
+                            console.log(err);
+                            return callback(err);
+                        }
                         console.log('followers', data.ids.length);
                         profile.follower_ids = data.ids;
 
