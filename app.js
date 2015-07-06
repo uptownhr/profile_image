@@ -23,17 +23,47 @@ app.get('/tw/:username', function(req,res){
     });
 });
 
+//return users total reach
+//count of all of users followers, followers
+app.get('/total-reach/:username', function(req,res){
+    var username = req.params.username;
+    getTwitterProfileFollowers(username, function(err, follower_ids){
+        var query = {
+            $match: {
+                id: {
+                    $in: follower_ids
+                }
+            }
+        };
 
+        var group = {
+            $project: {
+                total: "$raw.followers_count"
+            }
+        };
+
+        Twitter.aggregate(query, group, function(err, count){
+            res.send(err, count);
+        });
+    });
+});
 
 //populate followers for anyone that doesn't have followers populated
 //per rate limit of 15
 app.get('/followers/populate', function(req,res){
     var rate_limit = 15;
-    Twitter.find({follower_ids: {$size: 0}}).limit(rate_limit).exec(function(err, profiles) {
+    Twitter.find({follower_ids: {$size: 0}, 'raw.followers_count': {$gt: 0}, 'raw.protected': false}).limit(rate_limit).exec(function(err, profiles) {
         async.eachSeries(profiles, function(profile,callback){
             console.log('populating followers for ', profile.username);
+
             getTwitterProfileFollowers(profile.username, function(err, follower_ids){
-                if(err){ console.log('error populating followers for ', profile.username); }
+                if(err){
+                    console.log('error populating followers for ', profile.username);
+                    if(err.statusCode != 429 ){ //429 is rate limit hit
+                        profile.remove();
+                        return callback();
+                    }
+                }
                 callback(err);
             });
         }, function(err){
