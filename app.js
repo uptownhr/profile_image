@@ -37,13 +37,21 @@ app.get('/total-reach/:username', function(req,res){
         };
 
         var group = {
-            $project: {
-                total: "$raw.followers_count"
+            $group: {
+                _id: null,
+                total: { $sum: "$raw.followers_count" }
             }
         };
 
-        Twitter.aggregate(query, group, function(err, count){
-            res.send(err, count);
+        var project = {
+            $project:{
+                _id: 0,
+                total: 1
+            }
+        };
+
+        Twitter.aggregate(query, group, project, function(err, count){
+            res.send(count[0]);
         });
     });
 });
@@ -83,6 +91,7 @@ app.get('/friends/populate', function(req,res){
             console.log('populating friends for ', profile.username);
 
             getTwitterProfileFriends(profile.username, function(err, follower_ids){
+                console.log(err);
                 if(err){
                     console.log('error populating friends for ', profile.username);
                     if(err.statusCode != 429 ){ //429 is rate limit hit
