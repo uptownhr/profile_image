@@ -1,5 +1,5 @@
 module.exports = {
-    mongodb: process.env.MONGODB || 'mongodb://mongodb:27017/profile_images',
+    mongodb: process.env.MONGODB || 'mongodb://mongodb:27017/social',
 
     twitter: {
         consumerKey: process.env.TWITTER_KEY || 'rkiZIklhPqSI51duYcTlFJor1',

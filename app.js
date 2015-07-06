@@ -85,9 +85,12 @@ app.get('/followers/populate', function(req,res){
 //populate following for anyone that doesn't have following populated
 //per rate limit of 15
 app.get('/friends/populate', function(req,res){
+    console.log('/friends/populate');
     var rate_limit = 15;
-    Twitter.find({follower_ids: {$size: 0}, 'raw.friends_count': {$gt: 0}, 'raw.protected': false}).limit(rate_limit).exec(function(err, profiles) {
-        async.eachSeries(profiles, function(profile,callback){
+    Twitter.find({friend_ids: {$size: 0}, 'raw.friends_count': {$gt: 0}, 'raw.protected': false}).limit(rate_limit).exec(function(err, profiles) {
+//why are the same guys showing up
+	console.log('profiles count: ', profiles.length);
+        async.eachSeries(profiles, function(profile,callback){ //why is this not synchronous?
             console.log('populating friends for ', profile.username);
 
             getTwitterProfileFriends(profile.username, function(err, follower_ids){
@@ -99,9 +102,11 @@ app.get('/friends/populate', function(req,res){
                         return callback();
                     }
                 }
+		console.log('should be once per');
                 callback(err);
             });
         }, function(err){
+	    console.log('done populate friends');
             if(err){ return res.send(err); }
 
             res.send('done');
