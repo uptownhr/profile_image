@@ -74,6 +74,32 @@ app.get('/followers/populate', function(req,res){
     });
 });
 
+//populate following for anyone that doesn't have following populated
+//per rate limit of 15
+app.get('/friends/populate', function(req,res){
+    var rate_limit = 15;
+    Twitter.find({follower_ids: {$size: 0}, 'raw.friends_count': {$gt: 0}, 'raw.protected': false}).limit(rate_limit).exec(function(err, profiles) {
+        async.eachSeries(profiles, function(profile,callback){
+            console.log('populating friends for ', profile.username);
+
+            getTwitterProfileFriends(profile.username, function(err, follower_ids){
+                if(err){
+                    console.log('error populating friends for ', profile.username);
+                    if(err.statusCode != 429 ){ //429 is rate limit hit
+                        profile.remove();
+                        return callback();
+                    }
+                }
+                callback(err);
+            });
+        }, function(err){
+            if(err){ return res.send(err); }
+
+            res.send('done');
+        });
+    });
+});
+
 
 //loop through users followers and populate profile data
 app.get('/followers/:username/populate', function(req,res){
@@ -175,6 +201,40 @@ app.get('/:username', function(req,res){
 });
 
 app.listen(8080);
+
+function getTwitterProfileFriends(username, cb){
+    async.waterfall(
+        [
+            function(callback){
+                getTwitterProfile(username, callback);
+            },
+            function(profile,callback){
+                //check if db has followers
+                //if not pull from twitter
+                if (!profile){ return callback('cannot find username'); }
+
+                if(profile.friend_ids.length > 0){
+                    callback(null, profile.friend_ids);
+                }else{
+                    var twit = i.twit();
+                    console.log(profile.username);
+                    twit.get('/friends/ids', {screen_name: profile.username, count: 5000}, function(err, data){
+                        if(err){
+                            console.log(err);
+                            return callback(err);
+                        }
+                        console.log('friends', data.ids.length);
+                        profile.friend_ids = data.ids;
+
+                        profile.save(function(err, profile){
+                            callback(err, profile.friend_ids);
+                        });
+                    });
+                }
+            }
+        ],cb
+    )
+}
 
 function getTwitterProfileFollowers(username, cb){
     async.waterfall(
