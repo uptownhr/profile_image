@@ -16,10 +16,14 @@ mongoose.connection.on('connected', function(){
     console.log('Connected to MongoDB');
 });
 
-app.get('/tw/:username', function(req,res){
+app.get('/:username', function(req,res){
     var name = req.params.username;
     getTwitterProfile(name, function(err, profile){
-        res.redirect(profile.profile_image_url);
+	if(err){
+	    res.status(404).send(err);
+	}else{
+            res.send(profile);
+	}
     });
 });
 
@@ -208,12 +212,6 @@ app.get('/followers/:username', function(req,res){
     })
 });
 
-app.get('/:username', function(req,res){
-    var name = req.params.username;
-    var html = '<img src="/tw/' + name + '" />';
-    res.send(html);
-});
-
 app.listen(8080);
 
 function getTwitterProfileFriends(username, cb){
@@ -291,7 +289,7 @@ function getTwitterProfile(name, cb){
             function(callback) {
                 var regex = new RegExp(["^",name,"$"].join(""),"i");
                 Twitter.findOne({username: regex}, function (err, data) {
-                    callback(null, data);
+                    callback(err, data);
                 });
             }, function(profile, callback){
             if(profile){
@@ -306,7 +304,7 @@ function getTwitterProfile(name, cb){
                     newTwitter.raw = data;
                     newTwitter.save(function(err, profile){
                         console.log('new user saved', data.screen_name);
-                        callback(null, profile);
+                        callback(err, profile);
                     });
                 });
             }
