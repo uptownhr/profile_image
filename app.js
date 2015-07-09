@@ -27,11 +27,45 @@ app.get('/:username', function(req,res){
     });
 });
 
+app.get('/influencing/:username', function(req,res){
+    var username = req.params.username;
+
+    getTwitterProfileFollowers(username, function(err, follower_ids){
+        var profile_counts = [];
+
+        //get lean follower profiles
+        // - get profiles where follower_ids are populated
+        Twitter.find({id: {$in:follower_ids}}, {follower_ids:1, username: 1}).lean().exec(function(err, profiles){
+            //loop through profiles
+            async.eachSeries(profiles, function(profile, cb){
+                // - check if index profile has follower_ids matching target follower_ids
+                profile.count = 0;
+                profile.follower_ids.forEach(function(id){
+                    // - if found, count
+                    // - - count++;
+                    if(follower_ids.indexOf(id) != 0){
+                        profile.count++;
+                    }
+                });
+
+                profile_counts.push(null, profile);
+                cb();
+            },function(err){
+                console.log('done');
+                res.send(profile_counts);
+            });
+        });
+    });
+});
+
 //return users total reach
 //count of all of users followers, followers
 app.get('/total-reach/:username', function(req,res){
     var username = req.params.username;
     getTwitterProfileFollowers(username, function(err, follower_ids){
+        if(!follower_ids){
+
+        }else{}
         var query = {
             $match: {
                 id: {
@@ -55,7 +89,11 @@ app.get('/total-reach/:username', function(req,res){
         };
 
         Twitter.aggregate(query, group, project, function(err, count){
-            res.send(count[0]);
+            if(err || !count){
+                res.send([err,count]);
+            }else{
+                res.send(count[0]);
+            }
         });
     });
 });
