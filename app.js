@@ -32,6 +32,9 @@ app.get('/:username', function(req,res){
 app.get('/total-reach/:username', function(req,res){
     var username = req.params.username;
     getTwitterProfileFollowers(username, function(err, follower_ids){
+	if(!follower_ids){
+	    return res.status(404).send(err);
+	}
         var query = {
             $match: {
                 id: {
@@ -55,7 +58,11 @@ app.get('/total-reach/:username', function(req,res){
         };
 
         Twitter.aggregate(query, group, project, function(err, count){
-            res.send(count[0]);
+	    if(err || !count){
+                res.send([err,count]);
+            }else{
+                res.send(count[0]);
+            }
         });
     });
 });
