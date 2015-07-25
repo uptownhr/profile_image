@@ -35,7 +35,7 @@ app.get('/influencing/:username', function(req,res){
 
         //get lean follower profiles
         // - get profiles where follower_ids are populated
-        Twitter.find({id: {$in:follower_ids}}, {follower_ids:1, username: 1}).lean().exec(function(err, profiles){
+        Twitter.find({id: {$in:follower_ids}}, {follower_ids:1, username: 1, 'raw.followers_count':1}).lean().exec(function(err, profiles){
             //loop through profiles
             async.eachSeries(profiles, function(profile, cb){
                 // - check if index profile has follower_ids matching target follower_ids
@@ -43,16 +43,34 @@ app.get('/influencing/:username', function(req,res){
                 profile.follower_ids.forEach(function(id){
                     // - if found, count
                     // - - count++;
-                    if(follower_ids.indexOf(id) != 0){
+                    if(follower_ids.indexOf(id) != -1){
                         profile.count++;
                     }
                 });
+		
+                if(profile.count <= 10){
+                    delete profile.follower_ids;
+                    profile.ratio = profile.count / profile.raw.followers_count;
+                    profile_counts.push(profile);
+                }
 
-                profile_counts.push(null, profile);
                 cb();
             },function(err){
                 console.log('done');
-                res.send(profile_counts);
+                //sort by highest count
+                var sorted = profile_counts.sort(function (a, b) {
+                    if(a == null) return -1;
+
+                    if (a.ratio > b.ratio) {
+                        return 1;
+                    }
+                    if (a.ratio < b.ratio) {
+                        return -1;
+                    }
+                    // a must be equal to b
+                    return 0;
+                });
+                res.send(sorted);
             });
         });
     });
