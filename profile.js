@@ -83,6 +83,9 @@ app.get('/followers/populate', function(req,res){
                         return callback();
                     }
                 }
+
+
+
                 callback(err);
             });
         }, function(err){
@@ -243,9 +246,16 @@ function getTwitterProfileFriends(username, cb){
                             return callback(err);
                         }
                         console.log('friends', data.ids.length);
+
+			if(data.ids.length == 0){
+			    profile.raw.friends_count = 0;
+			    profile.markModified('raw');
+			}
+
                         profile.friend_ids = data.ids;
 
                         profile.save(function(err, profile){
+			    console.log(err, profile.raw.friends_count);
                             callback(err, profile.friend_ids);
                         });
                     });
@@ -277,9 +287,16 @@ function getTwitterProfileFollowers(username, cb){
                             return callback(err);
                         }
                         console.log('followers', data.ids.length);
+
+			if(data.ids.length == 0){
+			    profile.raw.followers_count = 0;
+			    profile.markModified('raw');
+			}
+
                         profile.follower_ids = data.ids;
 
                         profile.save(function(err, profile){
+			    console.log( err, profile.raw.followers_count );
                             callback(err, profile.follower_ids);
                         });
                     });
