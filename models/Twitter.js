@@ -7,6 +7,7 @@ var twitterSchema = new mongoose.Schema({
     username: { type: String, index: true, unique: true, required: true },
     follower_ids: [],
     friend_ids: [],
+    influencing: [],
     raw: {},
     created_at: { type: Date, default: Date.now() },
     updated_at: { type: Date, default: Date.now(), index: true },
