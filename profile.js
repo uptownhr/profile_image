@@ -30,47 +30,9 @@ app.get('/:username', function(req,res){
 app.get('/influencing/:username', function(req,res){
     var username = req.params.username;
 
-    getTwitterProfileFollowers(username, function(err, follower_ids){
-        var profile_counts = [];
-
-        //get lean follower profiles
-        // - get profiles where follower_ids are populated
-        Twitter.find({id: {$in:follower_ids}}, {follower_ids:1, username: 1, 'raw.followers_count':1}).lean().exec(function(err, profiles){
-            //loop through profiles
-		profiles.forEach( function(profile){
-                    // - check if index profile has follower_ids matching target follower_ids
-                    profile.count = 0;
-                    profile.follower_ids.forEach(function(id){
-			// - if found, count
-			// - - count++;
-			if(follower_ids.indexOf(id) != -1){
-                            profile.count++;
-			}
-                    });
-
-                    if(profile.count >= 5){
-			delete profile.follower_ids;
-			profile.ratio = profile.count / profile.raw.followers_count;
-			profile_counts.push(profile);
-                    }
-		});
-
-                //sort by highest count
-                var sorted = profile_counts.sort(function (a, b) {
-                    if(a == null) return 1;
-
-                    if (a.count > b.count) {
-                        return -1;
-                    }
-                    if (a.count < b.count) {
-                        return 1;
-                    }
-                    // a must be equal to b
-                    return 0;
-                });
-                res.send(sorted);
-        });
-    });
+    getInfluencing(username, function(err, users){
+        res.send(users);
+    })
 });
 
 //return users total reach
@@ -369,3 +331,56 @@ app.get('/total-reach/:username', function(req,res){
             }
         );
     }
+
+
+
+function getInfluencing(username, cb){
+
+    getTwitterProfileFollowers(username, function(err, follower_ids){
+        var profile_counts = [];
+
+        //get lean follower profiles
+        // - get profiles where follower_ids are populated
+        Twitter.find({id: {$in:follower_ids}}, {follower_ids:1, username: 1, 'raw.followers_count':1}).lean().exec(function(err, profiles){
+            //loop through profiles
+		profiles.forEach( function(profile){
+                    // - check if index profile has follower_ids matching target follower_ids
+                    profile.count = 0;
+                    profile.follower_ids.forEach(function(id){
+			// - if found, count
+			// - - count++;
+			if(follower_ids.indexOf(id) != -1){
+                            profile.count++;
+			}
+                    });
+
+                    if(profile.count >= 5){
+			delete profile.follower_ids;
+			profile.ratio = profile.count / profile.raw.followers_count;
+			profile_counts.push(profile);
+                    }
+		});
+
+                //sort by highest count
+                var sorted = profile_counts.sort(function (a, b) {
+                    if(a == null) return 1;
+
+                    if (a.count > b.count) {
+                        return -1;
+                    }
+                    if (a.count < b.count) {
+                        return 1;
+                    }
+                    // a must be equal to b
+                    return 0;
+                });
+
+	    getTwitterProfile(username, function(err,user){
+                user.influencing = sorted;
+                user.save(function(err,saved){
+                    console.log('saved influencing');
+                });
+            });
+        });
+    });
+}
