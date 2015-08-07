@@ -304,6 +304,7 @@ function getTwitterProfile(name, cb){
       [
           function(callback) {
               var regex = new RegExp(["^",name,"$"].join(""),"i");
+	      console.log(regex);
               Twitter.findOne({username: regex}, function (err, data) {
                   callback(err, data);
               });
@@ -332,8 +333,8 @@ function getTwitterProfile(name, cb){
 }
 
 function getInfluencing(username, cb){
-    getTwitterProfile(username, function(err, profile){
-        cb(err,profile);
+    getTwitterProfile(username, function(err, Profile){
+        cb(err,Profile);
 
         getTwitterProfileFollowers(username, function(err, follower_ids){
             var profile_counts = [];
@@ -374,11 +375,12 @@ function getInfluencing(username, cb){
                     return 0;
                 });
 
-
-                profile.influencing = sorted;
-                profile.save( function(err,saved){
-                    console.log('saved influencing');
-                });
+		getTwitterProfile(username, function(err, profile){
+                    profile.influencing = sorted;
+                    profile.save( function(err,saved){
+			console.log('saved influencing', saved, err);
+                    });
+		});
             });
         });
     });
