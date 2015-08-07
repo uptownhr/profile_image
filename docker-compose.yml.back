@@ -1,0 +1,27 @@
+mongodb:
+  image: mongo
+  ports:
+  - "27017"
+#proxy:
+#  image: jwilder/nginx-proxy
+#  ports:
+#  - "80:80"
+#  - "443:443"
+#  volumes:
+#  - processing/ssl/docker/:/etc/nginx/certs
+#  - /var/run/docker.sock:/tmp/docker.sock
+app:
+  image: node
+  ports:
+  - "8080"
+  links:
+  - mongodb:mongodb
+  volumes:
+  - .:/data
+  command: node /data/profile.js
+  environment:
+    VIRTUAL_HOST: images.jlee.biz
+    TWITTER_KEY: rkiZIklhPqSI51duYcTlFJor1
+    TWITTER_SECRET: CsIScvbAWp2whPKg66T34VoraRSbCzGSQXDHM3bptGzsrZtiXl
+    ACCESS_TOKEN: 139363532-8ImkuJ4Ws2akzrXLb8XeZpoOcF50nfjgHheTDUpU
+    ACCESS_TOKEN_SECRET: 1qQWhpO08yqWo3r2VFvptYnN7aIyaJwFBm6HPgYhegP3b

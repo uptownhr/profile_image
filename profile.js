@@ -332,8 +332,8 @@ function getTwitterProfile(name, cb){
 }
 
 function getInfluencing(username, cb){
-    getTwitterProfile(username, function(err, profile){
-        cb(err,profile);
+    getTwitterProfile(username, function(err, Profile){
+        cb(err,Profile);
 
         getTwitterProfileFollowers(username, function(err, follower_ids){
             var profile_counts = [];
@@ -375,9 +375,9 @@ function getInfluencing(username, cb){
                 });
 
 
-                profile.influencing = sorted;
-                profile.save( function(err,saved){
-                    console.log('saved influencing');
+                Profile.influencing = sorted;
+                Profile.save( function(err,saved){
+                    console.log('saved influencing', saved);
                 });
             });
         });
